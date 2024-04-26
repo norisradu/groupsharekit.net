@@ -157,9 +157,9 @@ namespace Sdl.Community.GroupShareKit.Tests.Integration.Clients
         // test cleanup
         public void Dispose()
         {
-            GroupShareClient.TranslationMemories.DeleteTm(tmId).Wait();
-            GroupShareClient.TranslationMemories.DeleteContainer(containerId).Wait();
-            GroupShareClient.TranslationMemories.DeleteDbServer(dbServerId).Wait();
+            //GroupShareClient.TranslationMemories.DeleteTm(tmId).Wait();
+            //GroupShareClient.TranslationMemories.DeleteContainer(containerId).Wait();
+            //GroupShareClient.TranslationMemories.DeleteDbServer(dbServerId).Wait();
         }
 
         [Fact]
@@ -305,6 +305,93 @@ namespace Sdl.Community.GroupShareKit.Tests.Integration.Clients
 
             var postDatedTUs = await groupShareClient.TranslationMemories.GetNumberOfPostDatedTus(tmId, languageParameters);
             Assert.Equal(0, postDatedTUs);
+        }
+
+        [Fact]
+        public async Task ImportTmWithSettings_FilePath()
+        {
+            var groupShareClient = Helper.GsClient;
+
+            //var translationMemory = await groupShareClient.TranslationMemories.GetTmById("9cbe6bdb-780b-41a4-b60b-4d1b4f2e6865");
+            //var translationMemoryId = await CreateTM();
+
+            var confirmationLevels = new List<string>
+            {
+                "Translated",
+                "ApprovedTranslation",
+                "ApprovedSignOff"
+            };
+
+            var importTmSettings = new ImportSettings
+            {
+                NewFieldsBehaviour = Settings.FieldsBehaviour.AddToSetup,
+                ConfirmationLevels = confirmationLevels,
+                FieldValues = new List<FieldValue> { },
+                ExistingTUsUpdateMode = Settings.UpdateMode.Overwrite,
+                ImportAsPlainText = false,
+                ExportInvalidTranslationUnits = false,
+                TriggerRecomputeStatistics = true
+            };
+
+            var languageParameters = new LanguageParameters("en-us", "de-de");
+            var filePath = @"Resources\FiveWords_EN-DE_TMX.tmx";
+
+            var importResponse = await groupShareClient.TranslationMemories.ImportTmWithSettings(tmId, languageParameters, filePath, importTmSettings);
+            Assert.Equal("Queued", importResponse.Status);
+            Assert.Equal(importTmSettings.ImportAsPlainText, importResponse.Settings.ImportAsPlainText);
+            Assert.Equal(importTmSettings.TriggerRecomputeStatistics, importResponse.Settings.TriggerRecomputeStatistics);
+            Assert.Equal(importTmSettings.ExportInvalidTranslationUnits, importResponse.Settings.ExportInvalidTranslationUnits);
+            Assert.Equal(importTmSettings.ExistingTUsUpdateMode, importResponse.Settings.ExistingTUsUpdateMode);
+            Assert.Equal(importTmSettings.NewFieldsBehaviour, importResponse.Settings.NewFieldsBehaviour);
+        }
+
+        [Fact]
+        public async Task ImportTmWithSettings_FileName_and_RawFile()
+        {
+            var groupShareClient = Helper.GsClient;
+
+            //var translationMemory = await groupShareClient.TranslationMemories.GetTmById("9cbe6bdb-780b-41a4-b60b-4d1b4f2e6865");
+
+            var confirmationLevels = new List<string>
+            {
+                "Translated",
+                "ApprovedTranslation",
+                "ApprovedSignOff"
+            };
+
+            var importTmSettings = new ImportSettings
+            {
+                ImportAsPlainText = false,
+                MinimumAlignmentQuality = 95,
+                UseTmUserIdFromBilingualFile = true,
+                TriggerRecomputeStatistics = true,
+                ExportInvalidTranslationUnits = false,
+                AcronymsAutoSubstitution = false,
+                CheckMatchingSublanguages = false,
+                ConfirmationLevels = confirmationLevels,
+                ExistingTUsUpdateMode = Settings.UpdateMode.Overwrite,
+                ExistingFieldsUpdateMode = Settings.ExistingFieldsMode.Merge,
+                NewFieldsBehaviour = Settings.FieldsBehaviour.AddToSetup,
+                TuProcessingMode = Settings.ProcessingMode.ProcessCleanedTUOnly,
+                FieldValues = new List<FieldValue> { }
+            };
+
+            var languageParameters = new LanguageParameters("en-us", "de-de");
+            var file = System.IO.File.ReadAllBytes(@"Resources\FiveWords_EN-DE_TMX.tmx");
+
+            var importResponse = await groupShareClient.TranslationMemories.ImportTmWithSettings("5c8361c0-ffb5-4ceb-908c-b2cde60b01e6", languageParameters, file, "TM-German.tmx", importTmSettings);
+            Assert.Equal("Queued", importResponse.Status);
+            Assert.Equal(importTmSettings.ImportAsPlainText, importResponse.Settings.ImportAsPlainText);
+            Assert.Equal(importTmSettings.MinimumAlignmentQuality, importResponse.Settings.MinimumAlignmentQuality);
+            Assert.Equal(importTmSettings.UseTmUserIdFromBilingualFile, importResponse.Settings.UseTmUserIdFromBilingualFile);
+            Assert.Equal(importTmSettings.TriggerRecomputeStatistics, importResponse.Settings.TriggerRecomputeStatistics);
+            Assert.Equal(importTmSettings.ExportInvalidTranslationUnits, importResponse.Settings.ExportInvalidTranslationUnits);
+            Assert.Equal(importTmSettings.AcronymsAutoSubstitution, importResponse.Settings.AcronymsAutoSubstitution);
+            Assert.Equal(importTmSettings.CheckMatchingSublanguages, importResponse.Settings.CheckMatchingSublanguages);
+            Assert.Equal(importTmSettings.ExistingTUsUpdateMode, importResponse.Settings.ExistingTUsUpdateMode);
+            Assert.Equal(importTmSettings.ExistingFieldsUpdateMode, importResponse.Settings.ExistingFieldsUpdateMode);
+            Assert.Equal(importTmSettings.NewFieldsBehaviour, importResponse.Settings.NewFieldsBehaviour);
+            Assert.Equal(importTmSettings.TuProcessingMode, importResponse.Settings.TuProcessingMode);
         }
 
         //[Theory]
